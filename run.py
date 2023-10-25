@@ -40,7 +40,7 @@ for i in range(grid_size):
             
             # Create a new instance of RushHourPropositions for the current proposition
             # The identifier is created by concatenating the coordinates and proposition identifier
-            proposition_object = RushHourPropositions(f"{i}{j}{prop}")
+            proposition_object = RushHourPropositions(f"{prop}{i}{j}")
             
             # Add the new RushHourPropositions instance to the cell_propositions dictionary
             cell_prev_propositions[prop] = proposition_object
@@ -61,7 +61,7 @@ for i in range(grid_size):
             
             # Create a new instance of RushHourPropositions for the current proposition
             # The identifier is created by concatenating the coordinates and proposition identifier
-            proposition_object = RushHourPropositions(f"{i}{j}{prop}")
+            proposition_object = RushHourPropositions(f"{prop}{i}{j}")
             
             # Add the new RushHourPropositions instance to the cell_propositions dictionary
             cell_next_propositions[prop] = proposition_object
@@ -82,10 +82,10 @@ def print_grid(grid, grid_name):
     print("\n")  # Print a newline between grids for readability
 
 # Print the 'Previous' grid
-print_grid(prev_grid, 'Previous')
+#print_grid(prev_grid, 'Previous')
 
 # Print the 'Next' grid
-print_grid(next_grid, 'Next')
+#print_grid(next_grid, 'Next')
 
 # Build an example full theory for your setting and return it.
 #
@@ -93,15 +93,29 @@ print_grid(next_grid, 'Next')
 #  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
 #  what the expectations are.
 def example_theory():
-    # Add custom constraints by creating formulas with the variables you created. 
-    E.add_constraint((a | b) & ~x)
-    # Implication
-    E.add_constraint(y >> z)
-    # Negate a formula
-    E.add_constraint(~(x & y))
-    # You can also add more customized "fancy" constraints. Use case: you don't want to enforce "exactly one"
-    # for every instance of BasicPropositions, but you want to enforce it for a, b, and c.:
-    constraint.add_exactly_one(E, a, b, c)
+
+    for i in range (0,6):
+        for j in range (0,6):
+            constraint.add_exactly_one(
+                E, 
+                prev_grid[(i, j)]['PE'],
+                prev_grid[(i, j)]['PR'],
+                prev_grid[(i, j)]['PH2'],
+                prev_grid[(i, j)]['PH3'],
+                prev_grid[(i, j)]['PV2'],
+                prev_grid[(i, j)]['PV3']
+             )
+            constraint.add_exactly_one(
+                E, 
+                next_grid[(i, j)]['NE'],
+                next_grid[(i, j)]['NR'],
+                next_grid[(i, j)]['NH2'],
+                next_grid[(i, j)]['NH3'],
+                next_grid[(i, j)]['NV2'],
+                next_grid[(i, j)]['NV3']
+             )
+
+
 
     return E
 
