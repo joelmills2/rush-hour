@@ -11,7 +11,7 @@ E = Encoding()
 
 # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
 @proposition(E)
-class BasicPropositions:
+class RushHourPropositions:
 
     def __init__(self, data):
         self.data = data
@@ -20,32 +20,72 @@ class BasicPropositions:
         return f"A.{self.data}"
 
 
-# Different classes for propositions are useful because this allows for more dynamic constraint creation
-# for propositions within that class. For example, you can enforce that "at least one" of the propositions
-# that are instances of this class must be true by using a @constraint decorator.
-# other options include: at most one, exactly one, at most k, and implies all.
-# For a complete module reference, see https://bauhaus.readthedocs.io/en/latest/bauhaus.html
-@constraint.at_least_one(E)
-@proposition(E)
-class FancyPropositions:
+grid_size = 6
+previous_propositions = ['PE', 'PR', 'PH2', 'PH3', 'PV2', 'PV3']
+next_propositions = ['NE', 'NR', 'NH2', 'NH3', 'NV2', 'NV3']
 
-    def __init__(self, data):
-        self.data = data
+# Initialize an empty dictionary for the grid
+prev_grid = {}
+next_grid = {}
 
-    def __repr__(self):
-        return f"A.{self.data}"
+# Iterate through each row and column in the grid
+for i in range(grid_size):
+    for j in range(grid_size):
+        
+        # Initialize an empty dictionary for the propositions of the current cell
+        cell_prev_propositions = {}
+        
+        # Iterate through each proposition identifier
+        for prop in previous_propositions:
+            
+            # Create a new instance of RushHourPropositions for the current proposition
+            # The identifier is created by concatenating the coordinates and proposition identifier
+            proposition_object = RushHourPropositions(f"{i}{j}{prop}")
+            
+            # Add the new RushHourPropositions instance to the cell_propositions dictionary
+            cell_prev_propositions[prop] = proposition_object
+        
+        # Once all propositions for the current cell have been created,
+        # add the cell_propositions dictionary to the grid dictionary
+        prev_grid[(i, j)] = cell_prev_propositions
 
-# Call your variables whatever you want
-a = BasicPropositions("a")
-b = BasicPropositions("b")   
-c = BasicPropositions("c")
-d = BasicPropositions("d")
-e = BasicPropositions("e")
-# At least one of these will be true
-x = FancyPropositions("x")
-y = FancyPropositions("y")
-z = FancyPropositions("z")
+# Iterate through each row and column in the grid
+for i in range(grid_size):
+    for j in range(grid_size):
+        
+        # Initialize an empty dictionary for the propositions of the current cell
+        cell_next_propositions = {}
+        
+        # Iterate through each proposition identifier
+        for prop in next_propositions:
+            
+            # Create a new instance of RushHourPropositions for the current proposition
+            # The identifier is created by concatenating the coordinates and proposition identifier
+            proposition_object = RushHourPropositions(f"{i}{j}{prop}")
+            
+            # Add the new RushHourPropositions instance to the cell_propositions dictionary
+            cell_next_propositions[prop] = proposition_object
+        
+        # Once all propositions for the current cell have been created,
+        # add the cell_propositions dictionary to the grid dictionary
+        next_grid[(i, j)] = cell_next_propositions
 
+# Function to print a grid
+def print_grid(grid, grid_name):
+    print(f"Grid: {grid_name}")
+    # Iterate through each cell in the grid
+    for coords, cell_propositions in grid.items():
+        # Iterate through each proposition in the current cell
+        for prop_id, prop_object in cell_propositions.items():
+            # Print the coordinates, proposition identifier, and proposition object identifier
+            print(f"Coordinates: {coords}, Proposition Identifier: {prop_id}")
+    print("\n")  # Print a newline between grids for readability
+
+# Print the 'Previous' grid
+print_grid(prev_grid, 'Previous')
+
+# Print the 'Next' grid
+print_grid(next_grid, 'Next')
 
 # Build an example full theory for your setting and return it.
 #
