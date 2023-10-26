@@ -93,7 +93,8 @@ def print_grid(grid, grid_name):
 #  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
 #  what the expectations are.
 def example_theory():
-
+ 
+    # Each cell can only one truth value on a given move
     for i in range (0,6):
         for j in range (0,6):
             constraint.add_exactly_one(
@@ -115,6 +116,29 @@ def example_theory():
                 next_grid[(i, j)]['NV3']
              )
 
+    # Each car has a fixed length of 2 or 3
+    # Horizontal cars length 2
+
+    # Horizontal cars length 3
+
+    # Vertical cars length 2
+
+    # Vertical cars length 3
+
+
+    # Each car is continuous, ie. its cells are adjacent and in the same direction
+
+
+    # The red car is a horizontal car of length 2
+
+
+    # The red car is at row i=2
+
+
+    # For a horizontal car, from previous (P) to next (N) state, the row (i) is the same 
+
+    
+
 
 
     return E
@@ -132,8 +156,10 @@ if __name__ == "__main__":
     print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
-    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-        # Ensure that you only send these functions NNF formulas
-        # Literals are compiled to NNF here
-        print(" %s: %.2f" % (vn, likelihood(T, v)))
+    for i in range(grid_size):
+        for j in range(grid_size):
+            for prop in previous_propositions:
+                prop_var = prev_grid[(i, j)][prop]
+                likelihood_value = likelihood(T, prop_var)
+                print(f" {prop_var}: {likelihood_value:.2f}")
     print()
