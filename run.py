@@ -116,26 +116,97 @@ def example_theory():
                 next_grid[(i, j)]['NV3']
              )
 
-    # Each car has a fixed length of 2 or 3
+    # Each car has a fixed length of 2 or 3 - if a cell has a car, one or more adjacent cells must have the same car (all cars have a height of 1)
     # Horizontal cars length 2
+    for row in range(grid_size):
+        for col in range(grid_size - 1):  # Subtract 1 to avoid index out of range
+            E.add_constraint(
+                prev_grid[(row, col)]['PH2'] >> prev_grid[(row, col + 1)]['PH2']
+            )
+
+    for row in range(grid_size):
+        for col in range(grid_size - 1):  # Subtract 1 to avoid index out of range
+            E.add_constraint(
+                next_grid[(row, col)]['NH2'] >> next_grid[(row, col + 1)]['NH2']
+            )
 
     # Horizontal cars length 3
+    for row in range(grid_size):
+        for col in range(grid_size - 2):
+            E.add_constraint(
+                prev_grid[(row, col)]['PH3'] >> (prev_grid[(row, col + 1)]['PH3'] & prev_grid[(row, col + 2)]['PH3'])
+            )
+    
+    for row in range(grid_size):
+        for col in range(grid_size - 2):
+            E.add_constraint(
+                next_grid[(row, col)]['NH3'] >> (next_grid[(row, col + 1)]['NH3'] & next_grid[(row, col + 2)]['NH3'])
+            )
+            
 
     # Vertical cars length 2
+    for col in range(grid_size):
+        for row in range(grid_size - 1):
+            E.add_constraint(
+                prev_grid[(row, col)]['PV2'] >> prev_grid[(row + 1, col)]['PV2']
+            )
+    
+    for col in range(grid_size):
+        for row in range(grid_size - 1):
+            E.add_constraint(
+                next_grid[(row, col)]['NV2'] >> next_grid[(row + 1, col)]['NV2']
+            )
 
     # Vertical cars length 3
+    for col in range(grid_size):
+        for row in range(grid_size - 2):
+            E.add_constraint(
+                prev_grid[(row, col)]['PV3'] >> (prev_grid[(row + 1, col)]['PV3'] & prev_grid[(row + 2, col)]['PV3'])
+            )
+    
+    for col in range(grid_size):
+        for row in range(grid_size - 2):
+            E.add_constraint(
+                next_grid[(row, col)]['NV3'] >> (next_grid[(row + 1, col)]['NV3'] & next_grid[(row + 2, col)]['NV3'])
+            )
 
 
-    # Each car is continuous, ie. its cells are adjacent and in the same direction
+    # The red car is a horizontal car of length 2, and must be in the 3rd row (i = 2)
+
+    # E.add_constraint((prev_grid[(2, 0)]['PR'] & prev_grid[(2, 1)]['PR']) | 
+    # (prev_grid[(2, 1)]['PR'] & prev_grid[(2, 2)]['PR']) | 
+    # (prev_grid[(2, 2)]['PR'] & prev_grid[(2, 3)]['PR']) | 
+    # (prev_grid[(2, 3)]['PR'] & prev_grid[(2, 4)]['PR']) | 
+    # (prev_grid[(2, 4)]['PR'] & prev_grid[(2, 5)]['PR']))
+
+    # E.add_constraint((next_grid[(2, 0)]['NR'] & next_grid[(2, 1)]['NR']) |
+    # (next_grid[(2, 1)]['NR'] & next_grid[(2, 2)]['NR']) |
+    # (next_grid[(2, 2)]['NR'] & next_grid[(2, 3)]['NR']) |
+    # (next_grid[(2, 3)]['NR'] & next_grid[(2, 4)]['NR']) |
+    # (next_grid[(2, 4)]['NR'] & next_grid[(2, 5)]['NR']))
+
+    # For a horizontal car, from previous (P) to next (N) state, the row (i) is the same (ie. a constant k), but the column j can change
 
 
-    # The red car is a horizontal car of length 2
+    # For a vertical car, from previous (P) to next (N) state, the column (j) is the same (ie. a constant k), but the row i can change
 
 
-    # The red car is at row i=2
+    # Cars have a fixed size
 
 
-    # For a horizontal car, from previous (P) to next (N) state, the row (i) is the same 
+    # No vehicles moving horizontally can be in the same row as the red car, ie. i != 2
+
+
+    # We start with some initial configuration, where every cell must be assigned a value
+
+
+    # The game is complete when no cars are blocking the red car from exiting the board, ie. R_{2j} > P_{2j} for all j in [0,5]
+
+
+    # When one part of a car moves, the rest of the car must move with it, ie. PH3_{10} && PH3_{11} && PH3_{12} -> NH3_{12} && NH3_{13} && NH3_{14}
+    
+
+
 
     
 
