@@ -1,4 +1,3 @@
-
 from bauhaus import Encoding, proposition, constraint
 from bauhaus.utils import count_solutions, likelihood
 
@@ -183,25 +182,28 @@ def example_theory():
 
 
     # The red car is a horizontal car of length 2, and must be in the 3rd row (i = 2)
-
-    # For a horizontal car, from previous (P) to next (N) state, the row (i) is the same (ie. a constant k), but the column j can change
-
-    # For a vertical car, from previous (P) to next (N) state, the column (j) is the same (ie. a constant k), but the row i can change
-
-    # Cars have a fixed size
-
+    constraint.add_exactly_one(
+        E,
+        (prev_grid[(2,0)]['RED'] & prev_grid(2,1)['RED']),
+        (prev_grid[(2,1)]['RED'] & prev_grid(2,2)['RED']),
+        (prev_grid[(2,2)]['RED'] & prev_grid(2,3)['RED']),
+        (prev_grid[(2,3)]['RED'] & prev_grid(2,4)['RED']),
+        (prev_grid[(2,4)]['RED'] & prev_grid(2,5)['RED'])
+    )
+    constraint.add_exactly_one(
+        E,
+        (next_grid[(2,0)]['RED'] & next_grid(2,1)['RED']),
+        (next_grid[(2,1)]['RED'] & next_grid(2,2)['RED']),
+        (next_grid[(2,2)]['RED'] & next_grid(2,3)['RED']),
+        (next_grid[(2,3)]['RED'] & next_grid(2,4)['RED']),
+        (next_grid[(2,4)]['RED'] & next_grid(2,5)['RED'])
+    )
     # No vehicles moving horizontally can be in the same row as the red car, ie. i != 2
-
-
-    # We start with some initial configuration, where every cell must be assigned a value
-
 
     # The game is complete when no cars are blocking the red car from exiting the board, ie. R_{2j} > P_{2j} for all j in [0,5]
 
-
     # When one part of a car moves, the rest of the car must move with it, ie. H3_{10} && H3_{11} && H3_{12} -> H3_{12} && H3_{13} && H3_{14}
-
-    
+  
     # Checking if a car has any valid moves
     for i in range(grid_size):
         for j in range (grid_size):
