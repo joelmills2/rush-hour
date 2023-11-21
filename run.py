@@ -146,10 +146,7 @@ def can_move(grid):
     for i in range(GRID_SIZE):
         for j in range (GRID_SIZE):
             if (i < GRID_SIZE-1):
-                x = grid[i][j]['H2']
-                y = grid[i+1][j]['E']
-                z = grid[i][j]['CMR']
-                E.add_constraint((~x | ~y) | z)
+                E.add_constraint((~(grid[i][j]['H2']) | ~(grid[i+1][j]['E'])) | (grid[i][j]['CMR']))
 
             if (i < GRID_SIZE-2):
                 E.add_constraint((~(grid[i][j]['H3']) | ~(grid[i+1][j]['E'])) | (grid[i][j]['CMR']))
@@ -225,14 +222,6 @@ prev_grid = fill_grid(prev_grid)
 #  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
 #  what the expectations are.
 def example_theory():
-    x = prev_grid[0][0]['E']
-    y = prev_grid[0][1]['CMR']
-    print(x)
-    print(y)
-    E.add_constraint(x | y)
-    print(E)
-    input()
-   
     can_move(prev_grid)
     only_one_state(prev_grid)
     # If we choose to loop through the game this would be if on first itteration
