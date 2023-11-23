@@ -142,34 +142,43 @@ def only_one_state(grid):
                     grid[i][j]["V3"]
                 ])
 
+def can_move_up(grid, i, j):
+    E.add_constraint((~ grid[i][j]['CMU'] | grid[i][j-1]['E']) & (~ grid[i][j]['CMU'] | grid[i][j]['V3'] | grid[i][j]['V2']) & (grid[i][j]['CMU'] | ~ grid[i][j-1]['E'] | ~ grid[i][j]['V3']) & (grid[i][j]['CMU'] | ~ grid[i][j-1]['E'] | ~ grid[i][j]['V2']))
+
+def can_move_down(grid, i, j):
+    E.add_constraint((~ grid[i][j]['CMD'] | grid[i][j+1]['E']) & (~ grid[i][j]['CMD'] | grid[i][j]['V3'] | grid[i][j]['V2']) & (grid[i][j]['CMD'] | ~ grid[i][j+1]['E'] | ~ grid[i][j]['V3']) & (grid[i][j]['CMD'] | ~ grid[i][j+1]['E'] | ~ grid[i][j]['V2']))
+
+def can_move_right_red(grid, i, j):
+    E.add_constraint((~ grid[i][j]['CMR'] | grid[i+1][j]['E']) & (~ grid[i][j]['CMR'] | grid[i][j]['H3'] | grid[i][j]['Red'] | grid[i][j]['H2']) & (grid[i][j]['CMR'] | ~ grid[i+1][j]['E'] | ~ grid[i][j]['H3']) & (grid[i][j]['CMR'] | ~ grid[i+1][j]['E'] | ~ grid[i][j]['Red']) & (grid[i][j]['CMR'] | ~ grid[i+1][j]['E'] | ~ grid[i][j]['H2']))
+
+def can_move_left_red(grid, i, j):
+    E.add_constraint((~ grid[i][j]['CML'] | grid[i-1][j]['E']) & (~ grid[i][j]['CML'] | grid[i][j]['H3'] | grid[i][j]['Red'] | grid[i][j]['H2']) & (grid[i][j]['CML'] | ~ grid[i-1][j]['E'] | ~ grid[i][j]['H3']) & (grid[i][j]['CML'] | ~ grid[i-1][j]['E'] | ~ grid[i][j]['Red']) & (grid[i][j]['CML'] | ~ grid[i-1][j]['E'] | ~ grid[i][j]['H2']))
+
+def can_move_right(grid, i, j):
+    E.add_constraint((~ grid[i][j]['CMR'] | grid[i+1][j]['E']) & (~ grid[i][j]['CMR'] | grid[i][j]['H3'] | grid[i][j]['H2']) & (grid[i][j]['CMR'] | ~ grid[i+1][j]['E'] | ~ grid[i][j]['H3']) & (grid[i][j]['CMR'] | ~ grid[i+1][j]['E'] | ~ grid[i][j]['H2']))
+
+def can_move_left(grid, i, j):
+    E.add_constraint((~ grid[i][j]['CMR'] | grid[i-1][j]['E']) & (~ grid[i][j]['CMR'] | grid[i][j]['H3'] | grid[i][j]['H2']) & (grid[i][j]['CMR'] | ~ grid[i-1][j]['E'] | ~ grid[i][j]['H3']) & (grid[i][j]['CMR'] | ~ grid[i-1][j]['E'] | ~ grid[i][j]['H2']))
+
+
 def can_move(grid):
     for i in range(GRID_SIZE):
         for j in range (GRID_SIZE):
             if (i < GRID_SIZE-1):
-                E.add_constraint((~(grid[i][j]['H2']) | ~(grid[i+1][j]['E'])) | (grid[i][j]['CMR']))
-
-            if (i < GRID_SIZE-2):
-                E.add_constraint((~(grid[i][j]['H3']) | ~(grid[i+1][j]['E'])) | (grid[i][j]['CMR']))
-           
+                if (i==2):
+                    can_move_right_red(grid, i, j)
+                else:
+                    can_move_right(grid, i, j)
             if (i > 0):
-                E.add_constraint((~grid[i][j]['H2'] | ~grid[i-1][j]['E']) | grid[i][j]['CML'])
-
-            if (i > 1):
-                E.add_constraint((~grid[i][j]['H3'] | ~grid[i-1][j]['E']) | grid[i][j]['CML'])
-
+                if (i==2):
+                    can_move_left_red(grid, i, j)
+                else:
+                    can_move_left(grid, i, j)
             if (j < GRID_SIZE-1):
-                E.add_constraint((~grid[i][j]['V2'] | ~grid[i][j+1]['E']) | grid[i][j]['CMD'])
-
-            if (j < GRID_SIZE-2):
-                E.add_constraint((~grid[i][j]['V3'] | ~grid[i][j+1]['E']) | grid[i][j]['CMD'])
-                                                                           
+                can_move_down(grid,i,j)                                                    
             if (j > 0):
-                E.add_constraint((~grid[i][j]['V2'] | ~grid[i][j-1]['E']) | grid[i][j]['CMU'])
-
-            if (j > 1):
-                E.add_constraint((~grid[i][j]['V3'] | ~grid[i][j-1]['E']) | grid[i][j]['CMU'])
-
-
+                can_move_up(grid,i,j)
+                
 # Building Initial Board:
 def starting_board(grid):
     E.add_constraint(grid[0][0]['E'])
@@ -208,6 +217,7 @@ def starting_board(grid):
     E.add_constraint(grid[5][3]['H3'])
     E.add_constraint(grid[5][4]['H3'])
     E.add_constraint(grid[5][5]['V3'])
+
 
 
 #Create Previous Grid
