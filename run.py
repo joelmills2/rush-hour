@@ -8,94 +8,98 @@ from colorama import Back, Style, Fore
 from nnf import config
 config.sat_backend = "kissat"
 
-# Encoding that will store all of your constraints
-E = Encoding()
+
 
 # Grid dimensions
 GRID_SIZE = 6
 
-# To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
-# Proposition classes for each type of cell content
-@proposition(E)
-class Empty:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+def initialize_encoding():
+    # Encoding that will store all of your constraints
+    E = Encoding()
 
-    def __repr__(self):
-        return f"Empty({self.x},{self.y})"
+    # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
+    # Proposition classes for each type of cell content
+    @proposition(E)
+    class Empty:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-@proposition(E)
-class Red:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"Empty({self.x},{self.y})"
 
-    def __repr__(self):
-        return f"Red({self.x},{self.y})"
+    @proposition(E)
+    class Red:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-@proposition(E)
-class H2:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"Red({self.x},{self.y})"
 
-    def __repr__(self):
-        return f"H2({self.x},{self.y})"
-   
-@proposition(E)
-class H3:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+    @proposition(E)
+    class H2:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"H3({self.x},{self.y})"
-   
-@proposition(E)
-class V2:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"H2({self.x},{self.y})"
+    
+    @proposition(E)
+    class H3:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"V2({self.x},{self.y})"
-   
-@proposition(E)
-class V3:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"H3({self.x},{self.y})"
+    
+    @proposition(E)
+    class V2:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"V3({self.x},{self.y})"
-   
-@proposition(E)
-class CMR:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"V2({self.x},{self.y})"
+    
+    @proposition(E)
+    class V3:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"CMR({self.x},{self.y})"
+        def __repr__(self):
+            return f"V3({self.x},{self.y})"
+    
+    @proposition(E)
+    class CMR:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-@proposition(E)
-class CML:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"CMR({self.x},{self.y})"
 
-    def __repr__(self):
-        return f"CML({self.x},{self.y})"
-        
-   
-@proposition(E)
-class CMU:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+    @proposition(E)
+    class CML:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"CMU({self.x},{self.y})"
-   
-@proposition(E)
-class CMD:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"CML({self.x},{self.y})"
+            
+    
+    @proposition(E)
+    class CMU:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"CMD({self.x},{self.y})"
+        def __repr__(self):
+            return f"CMU({self.x},{self.y})"
+    
+    @proposition(E)
+    class CMD:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
+
+        def __repr__(self):
+            return f"CMD({self.x},{self.y})"
+    return E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red
 
 # Innitialize Empty Grid
 def create_grid():
@@ -103,7 +107,7 @@ def create_grid():
     return new_grid
 
 # Fill Grid with propositions
-def fill_grid(grid):
+def fill_grid(grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red):
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             grid[x][y]["E"] = Empty(x, y)
@@ -332,7 +336,7 @@ def print_table(final_board):
 
 num_moves = 0
 
-def example_theory():
+def example_theory(E):
     set_states(current_grid, current_board) # set the constraints of the state of each cell
     can_move(current_grid)
     only_one_state(current_grid)
@@ -342,7 +346,11 @@ def example_theory():
 
 def filter_true_results(result_dict):
     # Using dictionary comprehension to filter out True values
-    true_values = {key: value for key, value in result_dict.items() if value}
+    true_values = {}
+    for key in result_dict.keys():
+        if result_dict[key]:
+            true_values[key] = result_dict[key]
+   # true_values = {key: value for key, value in result_dict.items() if value}
     return true_values
 
 def filter_can_move(results):
@@ -391,22 +399,27 @@ def user_choose_move(move_list):
 
 if __name__ == "__main__":
 
+
+
     current_board = create_starting_board()
 
     while True: # Until win state is reached
+
+        E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red = initialize_encoding()
+
+
         if num_moves != 0:
             current_board = new_board(current_board, direction, move_x, move_y)
 
         current_grid = create_grid()
-        current_grid = fill_grid(current_grid)
+        current_grid = fill_grid(current_grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red)
         
 
-        T = example_theory() # add constraints
+        T = example_theory(E) # add constraints
         T = T.compile() # compile model
         print("\nSatisfiable: %s" % T.satisfiable()) # will be removed in final product
         print("# Solutions: %d" % count_solutions(T)) # will be removed in final product
         num_moves += 1; # add 1 to the move counter
-        print(T.solve())
     
         # Display the board
         formatted_board = format_board_for_print(current_board)
