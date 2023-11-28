@@ -5,14 +5,15 @@ from colorama import Back, Style, Fore
 # Original board
 def create_board():
     board = [
-        ['  ', '  ', 'V2', 'H3', 'H3', 'H3'],
-        ['V2', 'V2', 'V2', '  ', 'V2', 'V2'],
-        ['V2', 'V2', 'R ', 'R ', 'V2', 'V2'],
-        ['V2', 'H2', 'H2', 'H2', 'H2', 'V3'],
-        ['V2', '  ', '  ', '  ', '  ', 'V3'],
-        ['H2', 'H2', 'H3', 'H3', 'H3', 'V3']
-    ]
+            ['E', 'E', 'V2', 'H3', 'H3', 'H3'],
+            ['V2', 'V2', 'V2', 'E', 'V2', 'V2'],
+            ['V2', 'V2', 'Red', 'Red', 'V2', 'V2'],
+            ['V2', 'H2', 'H2', 'H2', 'H2', 'V3'],
+            ['V2', 'E', 'E', 'E', 'E', 'V3'],
+            ['H2', 'H2', 'H3', 'H3', 'H3', 'V3']
+        ]
     return board
+
 
 
 def create_colour_board(board):
