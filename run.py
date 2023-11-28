@@ -8,94 +8,98 @@ from colorama import Back, Style, Fore
 from nnf import config
 config.sat_backend = "kissat"
 
-# Encoding that will store all of your constraints
-E = Encoding()
+
 
 # Grid dimensions
 GRID_SIZE = 6
 
-# To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
-# Proposition classes for each type of cell content
-@proposition(E)
-class Empty:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+def initialize_encoding():
+    # Encoding that will store all of your constraints
+    E = Encoding()
 
-    def __repr__(self):
-        return f"Empty({self.x},{self.y})"
+    # To create propositions, create classes for them first, annotated with "@proposition" and the Encoding
+    # Proposition classes for each type of cell content
+    @proposition(E)
+    class Empty:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-@proposition(E)
-class Red:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"Empty({self.x},{self.y})"
 
-    def __repr__(self):
-        return f"Red({self.x},{self.y})"
+    @proposition(E)
+    class Red:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-@proposition(E)
-class H2:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"Red({self.x},{self.y})"
 
-    def __repr__(self):
-        return f"H2({self.x},{self.y})"
-   
-@proposition(E)
-class H3:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+    @proposition(E)
+    class H2:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"H3({self.x},{self.y})"
-   
-@proposition(E)
-class V2:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"H2({self.x},{self.y})"
+    
+    @proposition(E)
+    class H3:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"V2({self.x},{self.y})"
-   
-@proposition(E)
-class V3:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"H3({self.x},{self.y})"
+    
+    @proposition(E)
+    class V2:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"V3({self.x},{self.y})"
-   
-@proposition(E)
-class CMR:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"V2({self.x},{self.y})"
+    
+    @proposition(E)
+    class V3:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"CMR({self.x},{self.y})"
+        def __repr__(self):
+            return f"V3({self.x},{self.y})"
+    
+    @proposition(E)
+    class CMR:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-@proposition(E)
-class CML:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"CMR({self.x},{self.y})"
 
-    def __repr__(self):
-        return f"CML({self.x},{self.y})"
-        
-   
-@proposition(E)
-class CMU:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+    @proposition(E)
+    class CML:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"CMU({self.x},{self.y})"
-   
-@proposition(E)
-class CMD:
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+        def __repr__(self):
+            return f"CML({self.x},{self.y})"
+            
+    
+    @proposition(E)
+    class CMU:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
 
-    def __repr__(self):
-        return f"CMD({self.x},{self.y})"
+        def __repr__(self):
+            return f"CMU({self.x},{self.y})"
+    
+    @proposition(E)
+    class CMD:
+        def __init__(self, x, y):
+            self.x, self.y = x, y
+
+        def __repr__(self):
+            return f"CMD({self.x},{self.y})"
+    return E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red
 
 # Innitialize Empty Grid
 def create_grid():
@@ -103,7 +107,7 @@ def create_grid():
     return new_grid
 
 # Fill Grid with propositions
-def fill_grid(grid):
+def fill_grid(grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red):
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             grid[x][y]["E"] = Empty(x, y)
@@ -189,7 +193,52 @@ def can_move(grid):
                 can_move_left(x,y,grid)
 
 
-def create_board():
+# Building Initial Board:
+def set_states(grid,board):
+    for y in range(GRID_SIZE):
+        for x in range(GRID_SIZE):
+            E.add_constraint(grid[x][y][board[y][x]])
+
+def new_board(prev_board, direction, move_x, move_y):
+    next_board = prev_board
+    if direction == "Right":
+            if prev_board[move_y][move_x] == 'H2':
+                next_board[move_y][move_x-1] = 'E'
+                next_board[move_y][move_x+1] = 'H2'
+            elif prev_board[move_y][move_x] == 'Red':
+                next_board[move_y][move_x-1] = 'E'
+                next_board[move_y][move_x+1] = 'Red'
+            elif prev_board[move_y][move_x] == 'H3':
+                next_board[move_y][move_x-2] = 'E'
+                next_board[move_y][move_x+1] = 'H2'
+    elif direction == "Left":
+            if prev_board[move_y][move_x] == 'H2':
+                next_board[move_y][move_x+1] = 'E'
+                next_board[move_y][move_x-1] = 'H2'
+            elif prev_board[move_y][move_x] == 'Red':
+                next_board[move_y][move_x+1] = 'E'
+                next_board[move_y][move_x-1] = 'Red'
+            elif prev_board[move_y][move_x] == 'H3':
+                next_board[move_y][move_x+2] = 'E'
+                next_board[move_y][move_x-1] = 'H2'
+    elif direction == "Up":
+            if prev_board[move_y][move_x] == 'V2':
+                next_board[move_y+1][move_x] = 'E'
+                next_board[move_y-1][move_x] = 'V2'
+            elif prev_board[move_y][move_x] == 'V3':
+                next_board[move_y+2][move_x] = 'E'
+                next_board[move_y-1][move_x] = 'V2'
+    elif direction == "Down":
+            if prev_board[move_y][move_x] == 'V2':
+                next_board[move_y-1][move_x] = 'E'
+                next_board[move_y+1][move_x] = 'V2'
+            elif prev_board[move_y][move_x] == 'V3':
+                next_board[move_y-2][move_x] = 'E'
+                next_board[move_y+1][move_x] = 'V2'
+            
+    return next_board
+
+def create_starting_board():
     board = [
             ['E', 'E', 'V2', 'H3', 'H3', 'H3'],
             ['V2', 'V2', 'V2', 'E', 'V2', 'V2'],
@@ -199,6 +248,8 @@ def create_board():
             ['H2', 'H2', 'H3', 'H3', 'H3', 'V3']
         ]
     return board
+
+
 
 def format_board_for_print(board):
     formatted_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]    
@@ -274,52 +325,6 @@ def print_table(final_board):
             print("├────┼────┼────┼────┼────┼────┤")
 
 
-# Building Initial Board:
-def starting_board(grid,board):
-    for y in range(GRID_SIZE):
-        for x in range(GRID_SIZE):
-            E.add_constraint(grid[x][y][board[y][x]])
-    # E.add_constraint(grid[0][0]['V2'])
-    # E.add_constraint(grid[0][1]['V2'])
-    # E.add_constraint(grid[0][2]['Red'])
-    # E.add_constraint(grid[0][3]['E'])
-    # E.add_constraint(grid[0][4]['E'])
-    # E.add_constraint(grid[0][5]['E'])
-    # E.add_constraint(grid[1][0]['E'])
-    # E.add_constraint(grid[1][1]['H2'])
-    # E.add_constraint(grid[1][2]['Red'])
-    # E.add_constraint(grid[1][3]['E'])
-    # E.add_constraint(grid[1][4]['V2'])
-    # E.add_constraint(grid[1][5]['V2'])
-    # E.add_constraint(grid[2][0]['E'])
-    # E.add_constraint(grid[2][1]['H2'])
-    # E.add_constraint(grid[2][2]['V2'])
-    # E.add_constraint(grid[2][3]['V2'])
-    # E.add_constraint(grid[2][4]['V2'])
-    # E.add_constraint(grid[2][5]['V2'])
-    # E.add_constraint(grid[3][0]['V3'])
-    # E.add_constraint(grid[3][1]['V3'])
-    # E.add_constraint(grid[3][2]['V3'])
-    # E.add_constraint(grid[3][3]['H2'])
-    # E.add_constraint(grid[3][4]['E'])
-    # E.add_constraint(grid[3][5]['E'])
-    # E.add_constraint(grid[4][0]['E'])
-    # E.add_constraint(grid[4][1]['E'])
-    # E.add_constraint(grid[4][2]['E'])
-    # E.add_constraint(grid[4][3]['H2'])
-    # E.add_constraint(grid[4][4]['E'])
-    # E.add_constraint(grid[4][5]['H2'])
-    # E.add_constraint(grid[5][0]['E'])
-    # E.add_constraint(grid[5][1]['V2'])
-    # E.add_constraint(grid[5][2]['V2'])
-    # E.add_constraint(grid[5][3]['V2'])
-    # E.add_constraint(grid[5][4]['V2'])
-    # E.add_constraint(grid[5][5]['H2'])
-
-
-#Create Previous Grid
-prev_grid = create_grid()
-prev_grid = fill_grid(prev_grid)
 
 
 
@@ -328,49 +333,106 @@ prev_grid = fill_grid(prev_grid)
 #  There should be at least 10 variables, and a sufficiently large formula to describe it (>50 operators).
 #  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
 #  what the expectations are.
-def example_theory():
-    can_move(prev_grid)
-    only_one_state(prev_grid)
-    # If we choose to loop through the game this would be if on first itteration
-    starting_board(prev_grid, create_board())
+
+num_moves = 0
+
+def example_theory(E):
+    set_states(current_grid, current_board) # set the constraints of the state of each cell
+    can_move(current_grid)
+    only_one_state(current_grid)
+
+
     return E
 
 def filter_true_results(result_dict):
     # Using dictionary comprehension to filter out True values
-    true_values = {key: value for key, value in result_dict.items() if value}
+    true_values = {}
+    for key in result_dict.keys():
+        if result_dict[key]:
+            true_values[key] = result_dict[key]
+   # true_values = {key: value for key, value in result_dict.items() if value}
     return true_values
+
+def filter_can_move(results):
+    can_move_results_list = []
+    for key in results.keys():
+        if ("CMR" in repr(key) or "CML" in repr(key) or "CMD" in repr(key) or "CMU" in repr(key)):
+            move = key
+            can_move_results_list.append(move)
+
+    return can_move_results_list
+
+
+def did_win(results):
+    return "Red(5,2)" in results
+
+def translate_direction(move):
+
+    direction = ""
+    
+    if repr(move)[:3] == "CMR":
+        direction = "Right"
+    elif repr(move)[:3] == "CML":
+        direction = "Left"
+    elif repr(move)[:3] == "CMD":
+        direction = "Down"
+    elif repr(move)[:3] == "CMU":
+        direction = "Up"
+    return direction
+
+
+def user_choose_move(move_list):
+    option_num = 0
+    for move in move_list:
+        direction = translate_direction(move)
+        print("Option:",option_num, repr(move)[3:], direction)
+        option_num+=1
+
+    option_num = (int)(input("Which move do you want to do? Input the number of the move: "))
+
+    direction = translate_direction(move_list[option_num])
+    move_x = repr(move_list[option_num])[4:5]
+    move_y = repr(move_list[option_num])[6:7]
+
+    return direction, (int)(move_x), (int)(move_y)
+
 
 if __name__ == "__main__":
 
-    T = example_theory()
-    # Don't compile until you're finished adding all your constraints!
-    T = T.compile()
-    print(E.introspect())
-    # After compilation (and only after), you can check some of the properties
-    # of your model:
-    print("\nSatisfiable: %s" % T.satisfiable())
-    print("# Solutions: %d" % count_solutions(T))
+
+
+    current_board = create_starting_board()
+
+    while True: # Until win state is reached
+
+        E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red = initialize_encoding()
+
+
+        if num_moves != 0:
+            current_board = new_board(current_board, direction, move_x, move_y)
+
+        current_grid = create_grid()
+        current_grid = fill_grid(current_grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red)
+        
+
+        T = example_theory(E) # add constraints
+        T = T.compile() # compile model
+        print("\nSatisfiable: %s" % T.satisfiable()) # will be removed in final product
+        print("# Solutions: %d" % count_solutions(T)) # will be removed in final product
+        num_moves += 1; # add 1 to the move counter
     
-    print("Solution:", filter_true_results(T.solve()))
-
-    board = create_board()
-    formatted_board = format_board_for_print(board)
-    color_board = create_colour_board(formatted_board)
-    final_board = display_board(formatted_board, color_board)
-
-    print("Display Board:")
-    print_table(final_board)
-
-    # T.solve() returns one solution. We need a way to access them all. Read bauhaus documentation.
-    # Once we have all the solutions we can output every moveable peice and the direction it can move by outputting the x,y for when CMR, CMD, DMU, CML ho;d
-   
-
-
-""" SAVED FOR TROUBLESHOOTING
-    print("\nVariable likelihoods:")
-    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-        # Ensure that you only send these functions NNF formulas
-        # Literals are compiled to NNF here
-        print(" %s: %.2f" % (vn, likelihood(T, v)))
-    print()
-"""
+        # Display the board
+        formatted_board = format_board_for_print(current_board)
+        color_board = create_colour_board(formatted_board)
+        final_board = display_board(formatted_board, color_board)
+        print("Display Board:")
+        print_table(final_board)
+    
+        true_results = filter_true_results(T.solve()) # filters so we only have the true results in the dictionary
+        game_over = did_win(true_results) # checks if red is in spot 5,2
+        if game_over:
+            #display_game_over(num_moves)
+            break
+        else:
+            possible_moves = filter_can_move(true_results) # filter so we only have the values with keys CMR, CML, CMD, CMU
+            direction, move_x, move_y = user_choose_move(possible_moves)
