@@ -189,7 +189,53 @@ def can_move(grid):
                 can_move_left(x,y,grid)
 
 
-def create_board():
+# Building Initial Board:
+def set_states(grid,board):
+    print(board)
+    for y in range(GRID_SIZE):
+        for x in range(GRID_SIZE):
+            E.add_constraint(grid[x][y][board[y][x]])
+
+def new_board(prev_board, direction, move_x, move_y):
+    next_board = prev_board
+    if direction == "Right":
+            if prev_board[move_y][move_x] == 'H2':
+                next_board[move_y][move_x-1] = 'E'
+                next_board[move_y][move_x+1] = 'H2'
+            elif prev_board[move_y][move_x] == 'Red':
+                next_board[move_y][move_x-1] = 'E'
+                next_board[move_y][move_x+1] = 'Red'
+            elif prev_board[move_y][move_x] == 'H3':
+                next_board[move_y][move_x-2] = 'E'
+                next_board[move_y][move_x+1] = 'H2'
+    elif direction == "Left":
+            if prev_board[move_y][move_x] == 'H2':
+                next_board[move_y][move_x+1] = 'E'
+                next_board[move_y][move_x-1] = 'H2'
+            elif prev_board[move_y][move_x] == 'Red':
+                next_board[move_y][move_x+1] = 'E'
+                next_board[move_y][move_x-1] = 'Red'
+            elif prev_board[move_y][move_x] == 'H3':
+                next_board[move_y][move_x+2] = 'E'
+                next_board[move_y][move_x-1] = 'H2'
+    elif direction == "Up":
+            if prev_board[move_y][move_x] == 'V2':
+                next_board[move_y+1][move_x] = 'E'
+                next_board[move_y-1][move_x] = 'V2'
+            elif prev_board[move_y][move_x] == 'V3':
+                next_board[move_y+2][move_x] = 'E'
+                next_board[move_y-1][move_x] = 'V2'
+    elif direction == "Down":
+            if prev_board[move_y][move_x] == 'V2':
+                next_board[move_y-1][move_x] = 'E'
+                next_board[move_y+1][move_x] = 'V2'
+            elif prev_board[move_y][move_x] == 'V3':
+                next_board[move_y-2][move_x] = 'E'
+                next_board[move_y+1][move_x] = 'V2'
+            
+    return next_board
+
+def create_starting_board():
     board = [
             ['E', 'E', 'V2', 'H3', 'H3', 'H3'],
             ['V2', 'V2', 'V2', 'E', 'V2', 'V2'],
@@ -199,6 +245,8 @@ def create_board():
             ['H2', 'H2', 'H3', 'H3', 'H3', 'V3']
         ]
     return board
+
+
 
 def format_board_for_print(board):
     formatted_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]    
@@ -274,52 +322,6 @@ def print_table(final_board):
             print("├────┼────┼────┼────┼────┼────┤")
 
 
-# Building Initial Board:
-def starting_board(grid,board):
-    for y in range(GRID_SIZE):
-        for x in range(GRID_SIZE):
-            E.add_constraint(grid[x][y][board[y][x]])
-    # E.add_constraint(grid[0][0]['V2'])
-    # E.add_constraint(grid[0][1]['V2'])
-    # E.add_constraint(grid[0][2]['Red'])
-    # E.add_constraint(grid[0][3]['E'])
-    # E.add_constraint(grid[0][4]['E'])
-    # E.add_constraint(grid[0][5]['E'])
-    # E.add_constraint(grid[1][0]['E'])
-    # E.add_constraint(grid[1][1]['H2'])
-    # E.add_constraint(grid[1][2]['Red'])
-    # E.add_constraint(grid[1][3]['E'])
-    # E.add_constraint(grid[1][4]['V2'])
-    # E.add_constraint(grid[1][5]['V2'])
-    # E.add_constraint(grid[2][0]['E'])
-    # E.add_constraint(grid[2][1]['H2'])
-    # E.add_constraint(grid[2][2]['V2'])
-    # E.add_constraint(grid[2][3]['V2'])
-    # E.add_constraint(grid[2][4]['V2'])
-    # E.add_constraint(grid[2][5]['V2'])
-    # E.add_constraint(grid[3][0]['V3'])
-    # E.add_constraint(grid[3][1]['V3'])
-    # E.add_constraint(grid[3][2]['V3'])
-    # E.add_constraint(grid[3][3]['H2'])
-    # E.add_constraint(grid[3][4]['E'])
-    # E.add_constraint(grid[3][5]['E'])
-    # E.add_constraint(grid[4][0]['E'])
-    # E.add_constraint(grid[4][1]['E'])
-    # E.add_constraint(grid[4][2]['E'])
-    # E.add_constraint(grid[4][3]['H2'])
-    # E.add_constraint(grid[4][4]['E'])
-    # E.add_constraint(grid[4][5]['H2'])
-    # E.add_constraint(grid[5][0]['E'])
-    # E.add_constraint(grid[5][1]['V2'])
-    # E.add_constraint(grid[5][2]['V2'])
-    # E.add_constraint(grid[5][3]['V2'])
-    # E.add_constraint(grid[5][4]['V2'])
-    # E.add_constraint(grid[5][5]['H2'])
-
-
-#Create Previous Grid
-prev_grid = create_grid()
-prev_grid = fill_grid(prev_grid)
 
 
 
@@ -328,11 +330,15 @@ prev_grid = fill_grid(prev_grid)
 #  There should be at least 10 variables, and a sufficiently large formula to describe it (>50 operators).
 #  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
 #  what the expectations are.
+
+num_moves = 0
+
 def example_theory():
-    can_move(prev_grid)
-    only_one_state(prev_grid)
-    # If we choose to loop through the game this would be if on first itteration
-    starting_board(prev_grid, create_board())
+    set_states(current_grid, current_board) # set the constraints of the state of each cell
+    can_move(current_grid)
+    only_one_state(current_grid)
+
+
     return E
 
 def filter_true_results(result_dict):
@@ -340,37 +346,64 @@ def filter_true_results(result_dict):
     true_values = {key: value for key, value in result_dict.items() if value}
     return true_values
 
+def filter_can_move(results):
+    print(type(list(results.keys())[0]))
+    can_move_results = {}
+    for key, value in results.items():
+        if isinstance(type(key), (type(CMR), type(CML), type(CMD), type(CMU))): # NOT WORKING, NEED TO COMPLETE
+            print(key)
+            can_move_results[key] = value
+
+    return can_move_results
+
+
+def did_win(results):
+    return "Red(5,2)" in results
+
+def user_choose_move(move_dic): # NEED TO COMPLETE
+    print(move_dic)
+    option_num = 0
+    for key, value in move_dic.items():
+
+        print("Option:",option_num+":",)
+    print(move_dic)
+    move_num = input("Which move do you want to do? Input the number of the move")
+
+
 if __name__ == "__main__":
 
-    T = example_theory()
-    # Don't compile until you're finished adding all your constraints!
-    T = T.compile()
-    print(E.introspect())
-    # After compilation (and only after), you can check some of the properties
-    # of your model:
-    print("\nSatisfiable: %s" % T.satisfiable())
-    print("# Solutions: %d" % count_solutions(T))
+    current_board = create_starting_board()
+
+    while True: # Until win state is reached
+        if num_moves != 0:
+            current_board = new_board(current_board, direction, move_x, move_y)
+
+        current_grid = create_grid()
+        current_grid = fill_grid(current_grid)
+        
+
+
+
+        T = example_theory() # add constraints
+        T = T.compile() # compile model
+        print("\nSatisfiable: %s" % T.satisfiable()) # will be removed in final product
+        print("# Solutions: %d" % count_solutions(T)) # will be removed in final product
+        num_moves += 1; # add 1 to the move counter
     
-    print("Solution:", filter_true_results(T.solve()))
-
-    board = create_board()
-    formatted_board = format_board_for_print(board)
-    color_board = create_colour_board(formatted_board)
-    final_board = display_board(formatted_board, color_board)
-
-    print("Display Board:")
-    print_table(final_board)
-
-    # T.solve() returns one solution. We need a way to access them all. Read bauhaus documentation.
-    # Once we have all the solutions we can output every moveable peice and the direction it can move by outputting the x,y for when CMR, CMD, DMU, CML ho;d
-   
-
-
-""" SAVED FOR TROUBLESHOOTING
-    print("\nVariable likelihoods:")
-    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-        # Ensure that you only send these functions NNF formulas
-        # Literals are compiled to NNF here
-        print(" %s: %.2f" % (vn, likelihood(T, v)))
-    print()
-"""
+        # Display the board
+        formatted_board = format_board_for_print(current_board)
+        color_board = create_colour_board(formatted_board)
+        final_board = display_board(formatted_board, color_board)
+        print("Display Board:")
+        print_table(final_board)
+    
+        true_results = filter_true_results(T.solve()) # filters so we only have the true results in the dictionary
+        game_over = did_win(true_results) # checks if red is in spot 5,2
+        if game_over:
+            #display_game_over(num_moves)
+            print("WINNNER")
+            break
+        else:
+            print("NOT WIN YET")
+            possible_moves = filter_can_move(true_results) # filter so we only have the values with keys CMR, CML, CMD, CMU
+            direction, move_x, move_y = user_choose_move(possible_moves)
