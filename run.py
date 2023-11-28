@@ -191,7 +191,6 @@ def can_move(grid):
 
 # Building Initial Board:
 def set_states(grid,board):
-    print(board)
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             E.add_constraint(grid[x][y][board[y][x]])
@@ -347,27 +346,47 @@ def filter_true_results(result_dict):
     return true_values
 
 def filter_can_move(results):
-    print(type(list(results.keys())[0]))
-    can_move_results = {}
-    for key, value in results.items():
-        if isinstance(type(key), (type(CMR), type(CML), type(CMD), type(CMU))): # NOT WORKING, NEED TO COMPLETE
-            print(key)
-            can_move_results[key] = value
+    can_move_results_list = []
+    for key in results.keys():
+        if ("CMR" in repr(key) or "CML" in repr(key) or "CMD" in repr(key) or "CMU" in repr(key)):
+            move = key
+            can_move_results_list.append(move)
 
-    return can_move_results
+    return can_move_results_list
 
 
 def did_win(results):
     return "Red(5,2)" in results
 
-def user_choose_move(move_dic): # NEED TO COMPLETE
-    print(move_dic)
-    option_num = 0
-    for key, value in move_dic.items():
+def translate_direction(move):
 
-        print("Option:",option_num+":",)
-    print(move_dic)
-    move_num = input("Which move do you want to do? Input the number of the move")
+    direction = ""
+    
+    if repr(move)[:3] == "CMR":
+        direction = "Right"
+    elif repr(move)[:3] == "CML":
+        direction = "Left"
+    elif repr(move)[:3] == "CMD":
+        direction = "Down"
+    elif repr(move)[:3] == "CMU":
+        direction = "Up"
+    return direction
+
+
+def user_choose_move(move_list):
+    option_num = 0
+    for move in move_list:
+        direction = translate_direction(move)
+        print("Option:",option_num, repr(move)[3:], direction)
+        option_num+=1
+
+    option_num = (int)(input("Which move do you want to do? Input the number of the move: "))
+
+    direction = translate_direction(move_list[option_num])
+    move_x = repr(move_list[option_num])[4:5]
+    move_y = repr(move_list[option_num])[6:7]
+
+    return direction, (int)(move_x), (int)(move_y)
 
 
 if __name__ == "__main__":
@@ -382,13 +401,12 @@ if __name__ == "__main__":
         current_grid = fill_grid(current_grid)
         
 
-
-
         T = example_theory() # add constraints
         T = T.compile() # compile model
         print("\nSatisfiable: %s" % T.satisfiable()) # will be removed in final product
         print("# Solutions: %d" % count_solutions(T)) # will be removed in final product
         num_moves += 1; # add 1 to the move counter
+        print(T.solve())
     
         # Display the board
         formatted_board = format_board_for_print(current_board)
@@ -401,9 +419,7 @@ if __name__ == "__main__":
         game_over = did_win(true_results) # checks if red is in spot 5,2
         if game_over:
             #display_game_over(num_moves)
-            print("WINNNER")
             break
         else:
-            print("NOT WIN YET")
             possible_moves = filter_can_move(true_results) # filter so we only have the values with keys CMR, CML, CMD, CMU
             direction, move_x, move_y = user_choose_move(possible_moves)
