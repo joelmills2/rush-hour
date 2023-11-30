@@ -2,28 +2,78 @@ from bauhaus import Encoding, proposition, constraint
 from bauhaus.utils import count_solutions, likelihood
 from boards import all_boards
 import random
-
+import os
 from colorama import Back, Style, Fore
-
-# These two lines make sure a faster SAT solver is used.
 from nnf import config
 
 config.sat_backend = "kissat"
-
-
-import os
-
-
-def clear_screen():
-    # Clear the console screen.
-    os.system("cls" if os.name == "nt" else "clear")
-
 
 # Grid dimensions
 GRID_SIZE = 6
 
 
+colour_mapping = {
+    10: "Light Green",
+    11: "Light Yellow",
+    12: "Blue",
+    202: "Orange",
+    129: "Purple",
+    43: "Cyan",
+    163: "Magenta",
+    22: "Dark Green",
+    17: "Navy",
+    6: "Teal",
+    1: "Maroon",
+    8: "Grey",
+    15: "White",
+    138: "Pinkish Brown",
+    178: "Gold",
+    88: "Dark Red",
+}
+
+# Helper function to assign colours to H2, H3, V2, and V3 pairs
+selected_colours = [
+    (num, colour_mapping[num])
+    for num in [
+        10,
+        11,
+        12,
+        202,
+        129,
+        43,
+        163,
+        22,
+        17,
+        6,
+        1,
+        8,
+        15,
+        138,
+        178,
+        88,
+    ]
+]
+
+
+def clear_screen():
+    """
+    Clears the console screen.
+
+    This function is used to refresh the game display by clearing the existing content
+    from the console. It ensures that the game's visual output is clean and uncluttered.
+    """
+    # Clear the console screen.
+    os.system("cls" if os.name == "nt" else "clear")
+
+
 def initialize_encoding():
+    """
+    Initializes the encoding for storing game constraints.
+
+    This function sets up the encoding environment that is used to define the rules and
+    constraints of the game. It includes the creation of proposition classes for each
+    type of cell content on the game board.
+    """
     # Encoding that will store all of your constraints
     E = Encoding()
 
@@ -114,12 +164,18 @@ def initialize_encoding():
 
 # Innitialize Empty Grid
 def create_grid():
+    """
+    Creates an empty grid of size GRID_SIZE x GRID_SIZE.
+    """
     new_grid = [[{} for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
     return new_grid
 
 
 # Fill Grid with propositions
 def fill_grid(grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red):
+    """
+    Fills the grid with propositions for each cell.
+    """
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             grid[x][y]["E"] = Empty(x, y)
@@ -138,6 +194,9 @@ def fill_grid(grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red):
 
 # CONSTRAINT FUNCTIONS
 def only_one_state(grid):
+    """
+    Ensures that each cell has only one state.
+    """
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             if y == 2:
@@ -167,6 +226,9 @@ def only_one_state(grid):
 
 
 def can_move_down(x, y, grid):
+    """
+    Checks whether a car can move down.
+    """
     E.add_constraint((grid[x][y]["V2"] & grid[x][y + 1]["E"]) >> grid[x][y]["CMD"])
     E.add_constraint((grid[x][y]["V3"] & grid[x][y + 1]["E"]) >> grid[x][y]["CMD"])
     E.add_constraint(
@@ -176,6 +238,9 @@ def can_move_down(x, y, grid):
 
 
 def can_move_up(x, y, grid):
+    """
+    Checks whether a car can move up.
+    """
     E.add_constraint((grid[x][y]["V2"] & grid[x][y - 1]["E"]) >> grid[x][y]["CMU"])
     E.add_constraint((grid[x][y]["V3"] & grid[x][y - 1]["E"]) >> grid[x][y]["CMU"])
     E.add_constraint(
@@ -185,6 +250,9 @@ def can_move_up(x, y, grid):
 
 
 def can_move_right(x, y, grid):
+    """
+    Checks whether a car can move right.
+    """
     E.add_constraint((grid[x][y]["H2"] & grid[x + 1][y]["E"]) >> grid[x][y]["CMR"])
     E.add_constraint((grid[x][y]["H3"] & grid[x + 1][y]["E"]) >> grid[x][y]["CMR"])
     if y == 2:
@@ -204,6 +272,9 @@ def can_move_right(x, y, grid):
 
 
 def can_move_left(x, y, grid):
+    """
+    Checks whether a car can move left.
+    """
     E.add_constraint((grid[x][y]["H2"] & grid[x - 1][y]["E"]) >> grid[x][y]["CML"])
     E.add_constraint((grid[x][y]["H3"] & grid[x - 1][y]["E"]) >> grid[x][y]["CML"])
     if y == 2:
@@ -223,6 +294,9 @@ def can_move_left(x, y, grid):
 
 
 def can_move(grid):
+    """
+    Checks whether a car can move in any direction.
+    """
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             if y < GRID_SIZE - 1:
@@ -235,14 +309,19 @@ def can_move(grid):
                 can_move_left(x, y, grid)
 
 
-# Building Initial Board:
 def set_states(grid, board):
+    """
+    Sets the initial state of each cell.
+    """
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
             E.add_constraint(grid[x][y][board[y][x]])
 
 
 def new_board(prev_board, direction, move_x, move_y):
+    """
+    Creates a new board after a move has been made.
+    """
     next_board = prev_board
     if direction == "Right":
         if prev_board[move_y][move_x] == "H2":
@@ -283,10 +362,16 @@ def new_board(prev_board, direction, move_x, move_y):
 
 
 def create_starting_board():
+    """
+    Selects a random starting board.
+    """
     return random.choice(all_boards)
 
 
 def format_board_for_print(board):
+    """
+    Formats the board for printing in the console.
+    """
     formatted_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
     for y in range(GRID_SIZE):
         for x in range(GRID_SIZE):
@@ -299,105 +384,94 @@ def format_board_for_print(board):
     return formatted_board
 
 
-# def create_colour_board(board):
-#     # Map block types to colorama background colors
-#     block_colors = {
-#         "H2": Back.GREEN,
-#         "H3": Back.BLUE,
-#         "V2": Back.MAGENTA,
-#         "V3": Back.CYAN,
-#         "R ": Back.RED,
-#     }
-
-#     color_board = [["" for _ in row] for row in board]
-
-#     for row in range(len(board)):
-#         for col in range(len(board[row])):
-#             block = board[row][col]
-#             if block in block_colors:
-#                 color_board[row][col] = block_colors[block]
-
-#     return color_board
+def generate_256_colour_code(colour_number):
+    """
+    Generates a colour code for a given colour number.
+    """
+    return f"\033[48;5;{colour_number}m"
 
 
 def create_colour_board(board):
-    # Initialize color board with empty strings
-    color_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    """
+    Creates a colour board for printing in the console.
+    """
+    # Dictionary to store colour codes for each car
+    car_colour_mapping = {}
 
-    # Helper function to assign colors to H2, H3, V2, and V3 pairs
-    colours = [getattr(Back, color) for color in dir(Back) if color.isupper()]
-    colours.remove(Back.RED)
-    colours.remove(Back.LIGHTRED_EX)
-    colours.remove(Back.BLACK)
-    colours.remove(Back.RESET)
+    # Initialize colour board with empty strings
+    colour_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+
+    colours = [(generate_256_colour_code(num), name) for num, name in selected_colours]
+
     random.shuffle(colours)
-    print(colours)
-    for row in range(len(board)):  # Iterate up to the last row
+    for row in range(len(board)):
         for col in range(len(board[row])):
-            if board[row][col] == "R ":
-                color_board[row][col] = Back.RED
-            if (
+            # Coloring the 'Red' car
+            if board[row][col] == "Red":
+                colour_board[row][col] = "\033[48;5;9m"
+
+            # Coloring horizontal cars 'H3'
+            elif (
                 board[row][col] == "H3"
                 and col + 1 < len(board[row])
                 and board[row][col + 1] == "H3"
                 and col + 2 < len(board[row])
                 and board[row][col + 2] == "H3"
             ):
-                color = colours.pop()
-                color_board[row][col] = color
-                color_board[row][col + 1] = color
-                color_board[row][col + 2] = color
-                col += 2
+                colour_code, colour_name = colours.pop()
+                car_colour_mapping[f"H3_{col},{row}"] = (colour_code, colour_name)
+                colour_board[row][col] = colour_code
+                colour_board[row][col + 1] = colour_code
+                colour_board[row][col + 2] = colour_code
+
+            # Coloring horizontal cars 'H2'
             elif (
                 board[row][col] == "H2"
                 and col + 1 < len(board[row])
                 and board[row][col + 1] == "H2"
-                and color_board[row][col] == ""
             ):
-                color = colours.pop()
-                color_board[row][col] = color
-                color_board[row][col + 1] = color
-                col += 1
-            elif (
-                board[row][col] == "V2"
-                and row + 1 < len(board)
-                and board[row + 1][col] == "V2"
-                and color_board[row][col] == ""
-                and color_board[row + 1][col] == ""
-            ):
-                color = colours.pop()
-                color_board[row][col] = color
-                color_board[row + 1][col] = color
-            elif (
-                board[row][col] == "V3"
-                and row + 1 < len(board)
-                and board[row + 1][col] == "V3"
-                and row + 2 < len(board)
-                and board[row + 2][col] == "V3"
-                and color_board[row][col] == ""
-                and color_board[row + 1][col] == ""
-                and color_board[row + 2][col] == ""
-            ):
-                color = colours.pop()
-                color_board[row][col] = color
-                color_board[row + 1][col] = color
-                color_board[row + 2][col] = color
-    return color_board
+                colour_code, colour_name = colours.pop()
+                car_colour_mapping[f"H2_{col},{row}"] = (colour_code, colour_name)
+                colour_board[row][col] = colour_code
+                colour_board[row][col + 1] = colour_code
+
+            # Improved logic for vertical cars 'V2' and 'V3'
+            elif board[row][col] in ["V2", "V3"]:
+                if (
+                    row == 0 or board[row - 1][col] != board[row][col]
+                ):  # Topmost part of the car
+                    colour_code, colour_name = colours.pop()
+                    car_colour_mapping[f"{board[row][col]}_{col},{row}"] = (
+                        colour_code,
+                        colour_name,
+                    )
+                    car_length = 2 if board[row][col] == "V2" else 3
+                    for offset in range(car_length):
+                        if row + offset < len(board):
+                            colour_board[row + offset][col] = colour_code
+
+    return colour_board, car_colour_mapping
 
 
-def display_board(board, color_board):
+def display_board(board, colour_board):
+    """
+    Displays the board in the console.
+    """
     display_board = []
     for row in range(6):
         display_row = []
         for col in range(6):
             display_row.append(
-                f"{color_board[row][col]}{board[row][col]}{Style.RESET_ALL}"
+                f"{colour_board[row][col]}{board[row][col]}{Style.RESET_ALL}"
             )
         display_board.append(display_row)
     return display_board
 
 
 def print_table(final_board):
+    """
+    Prints the table in the console.
+    """
     print("╒════╤════╤════╤════╤════╤════╕")
     for row in range(6):
         for col in range(5):
@@ -412,16 +486,10 @@ def print_table(final_board):
             print("├────┼────┼────┼────┼────┼────┤")
 
 
-# Build an example full theory for your setting and return it.
-#
-#  There should be at least 10 variables, and a sufficiently large formula to describe it (>50 operators).
-#  This restriction is fairly minimal, and if there is any concern, reach out to the teaching staff to clarify
-#  what the expectations are.
-
-num_moves = 0
-
-
 def example_theory(E):
+    """
+    Builds an example full theory for the game.
+    """
     set_states(
         current_grid, current_board
     )  # set the constraints of the state of each cell
@@ -432,6 +500,9 @@ def example_theory(E):
 
 
 def filter_true_results(result_dict):
+    """
+    Filters the results dictionary to only include the true results.
+    """
     # Using dictionary comprehension to filter out True values
     true_values = {}
     for key in result_dict.keys():
@@ -442,6 +513,9 @@ def filter_true_results(result_dict):
 
 
 def filter_can_move(results):
+    """
+    Filters the results dictionary to only include the moves that can be made.
+    """
     can_move_results_list = []
     for key in results.keys():
         if (
@@ -457,10 +531,20 @@ def filter_can_move(results):
 
 
 def did_win(results):
-    return "Red(5,2)" in results
+    """
+    Checks whether the game has been won.
+    """
+    # Assuming 'Red(5,2)' is the key format in the results dictionary
+    for key in results:
+        if str(key) == "Red(5,2)" and results[key]:
+            return True
+    return False
 
 
 def translate_direction(move):
+    """
+    Translates the move into a direction.
+    """
     direction = ""
 
     if repr(move)[:3] == "CMR":
@@ -474,26 +558,95 @@ def translate_direction(move):
     return direction
 
 
-def user_choose_move(move_list):
+def extract_coordinates_from_move(move):
+    """
+    Extracts the coordinates from the move.
+    """
+    return move.x, move.y
+
+
+def user_choose_move(move_list, car_colour_mapping, board):
+    """
+    Allows the user to choose a move.
+    """
     option_num = 0
+    print("Possible Moves:", move_list)
     for move in move_list:
         direction = translate_direction(move)
-        print("Option:", option_num, repr(move)[3:], direction)
+        move_x, move_y = extract_coordinates_from_move(move)
+
+        if move_y == 2 and (direction == "Right" or direction == "Left"):
+            colour_name = "Red"
+        else:
+            # Adjust coordinates for right and down moves
+            if direction == "Right":
+                move_x, move_y = find_leftmost_coordinate(current_board, move_x, move_y)
+            elif direction == "Down":
+                move_x, move_y = find_topmost_coordinate(current_board, move_x, move_y)
+
+            coordinate_str = f"{move_x},{move_y}"
+
+            # Find the key in car_colour_mapping that ends with the coordinate string
+            colour_name = "Unknown"
+            for key in car_colour_mapping:
+                if key.endswith(coordinate_str):
+                    _, colour_name = car_colour_mapping[key]
+                    break
+
+        print(f"Option: {option_num}: Move {colour_name} {direction}")
         option_num += 1
 
-    option_num = (int)(
+    chosen_option = int(
         input("Which move do you want to do? Input the number of the move: ")
     )
+    chosen_move = move_list[chosen_option]
+    direction = translate_direction(chosen_move)
+    move_x, move_y = extract_coordinates_from_move(chosen_move)
 
-    direction = translate_direction(move_list[option_num])
-    move_x = repr(move_list[option_num])[4:5]
-    move_y = repr(move_list[option_num])[6:7]
+    return direction, move_x, move_y
 
-    return direction, (int)(move_x), (int)(move_y)
+
+def find_leftmost_coordinate(board, x, y):
+    """
+    Finds the leftmost coordinate of a car.
+    """
+    car_type = board[y][x]
+    max_length = 2 if car_type == "H2" else 3 if car_type == "H3" else 1
+
+    # Initialize variables to track the start of the car and its length
+    start_x = x
+    car_length = 0
+
+    # Move leftwards to find the start of the car
+    while start_x >= 0 and board[y][start_x] == car_type:
+        start_x -= 1
+        car_length += 1
+        if car_length == max_length:
+            break
+
+    # Correct the start_x as it will be one step too far to the left
+    start_x += 1
+
+    return start_x, y
+
+
+def find_topmost_coordinate(board, x, y):
+    """
+    Finds the topmost coordinate of a car.
+    """
+    car_type = board[y][x]  # Get the car type from the current position
+
+    # Move upwards to find the start of the car
+    while y > 0 and board[y - 1][x] == car_type:
+        y -= 1
+
+    return x, y
 
 
 if __name__ == "__main__":
+    clear_screen()
     current_board = create_starting_board()
+    num_moves = 0
 
     while True:  # Until win state is reached
         E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red = initialize_encoding()
@@ -508,18 +661,13 @@ if __name__ == "__main__":
 
         T = example_theory(E)  # add constraints
         T = T.compile()  # compile model
-        print("\nSatisfiable: %s" % T.satisfiable())  # will be removed in final product
-        print(
-            "# Solutions: %d" % count_solutions(T)
-        )  # will be removed in final product
         num_moves += 1
         # add 1 to the move counter
 
         # Display the board
         formatted_board = format_board_for_print(current_board)
-        color_board = create_colour_board(formatted_board)
-        final_board = display_board(formatted_board, color_board)
-        print("Display Board:")
+        colour_board, car_colour_mapping = create_colour_board(current_board)
+        final_board = display_board(formatted_board, colour_board)
         print_table(final_board)
 
         true_results = filter_true_results(
@@ -533,4 +681,6 @@ if __name__ == "__main__":
             possible_moves = filter_can_move(
                 true_results
             )  # filter so we only have the values with keys CMR, CML, CMD, CMU
-            direction, move_x, move_y = user_choose_move(possible_moves)
+            direction, move_x, move_y = user_choose_move(
+                possible_moves, car_colour_mapping, current_board
+            )

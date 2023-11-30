@@ -16,16 +16,8 @@ board2 = [
     ["E", "E", "E", "E", "E", "V2"],
 ]
 
-board3 = [
-    ["H3", "H3", "H3", "H3", "H3", "H3"],
-    ["E", "E", "E", "E", "V2", "E"],
-    ["Red", "Red", "E", "E", "V2", "V2"],
-    ["V2", "H2", "H2", "H2", "H2", "V2"],
-    ["V2", "E", "E", "V2", "H2", "H2"],
-    ["H2", "H2", "E", "V2", "E", "E"],
-]
 
-board4 = [
+board3 = [
     ["E", "E", "E", "E", "E", "E"],
     ["E", "V2", "E", "E", "V3", "E"],
     ["E", "V2", "Red", "Red", "V3", "E"],
@@ -34,7 +26,7 @@ board4 = [
     ["E", "E", "V2", "V2", "E", "E"],
 ]
 
-board5 = [
+board4 = [
     ["E", "E", "V3", "E", "H2", "H2"],
     ["E", "E", "V3", "H2", "H2", "E"],
     ["Red", "Red", "V3", "V3", "E", "E"],
@@ -43,7 +35,7 @@ board5 = [
     ["V2", "H2", "H2", "H2", "H2", "E"],
 ]
 
-board6 = [
+board5 = [
     ["V2", "H2", "H2", "E", "V2", "E"],
     ["V2", "E", "E", "E", "V2", "V2"],
     ["Red", "Red", "V2", "E", "E", "V2"],
@@ -52,7 +44,7 @@ board6 = [
     ["E", "V3", "E", "E", "V2", "E"],
 ]
 
-board7 = [
+board6 = [
     ["V2", "H2", "H2", "H3", "H3", "H3"],
     ["V2", "E", "V2", "E", "E", "E"],
     ["Red", "Red", "V2", "E", "E", "E"],
@@ -61,7 +53,7 @@ board7 = [
     ["H3", "H3", "H3", "V2", "V2", "V2"],
 ]
 
-board8 = [
+board7 = [
     ["E", "E", "E", "H2", "H2", "E"],
     ["E", "E", "V3", "E", "E", "E"],
     ["Red", "Red", "V3", "E", "E", "E"],
@@ -70,5 +62,5 @@ board8 = [
     ["E", "E", "E", "V2", "E", "E"],
 ]
 
-all_boards = [board1, board2, board3, board4, board5, board6, board7, board8]
+all_boards = [board1, board2, board3, board4, board5, board6, board7]
 
