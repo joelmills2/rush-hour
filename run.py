@@ -648,18 +648,24 @@ def user_choose_move(move_list, colour_board):
     chosen_option = None
 
     while True:
+        chosen_option = input(
+            "Which move do you want to do? Input the number of the move: "
+        )
+
+        if chosen_option.upper() == "Q":
+            exit()
+
         try:
-            chosen_option = int(
-                input("Which move do you want to do? Input the number of the move: ")
-            )
+            chosen_option = int(chosen_option)
 
             if 0 <= chosen_option <= option_num - 1:
                 break
             else:
                 print(f"Please enter a choice between {0} and {option_num-1}.")
-
         except ValueError:
-            print("Invalid input. Please enter a valid integer.")
+            print(
+                "Invalid input. Please enter a valid integer or enter Q to quit this level."
+            )
 
     chosen_move = move_list[chosen_option]
     direction = translate_direction(chosen_move)
@@ -699,8 +705,11 @@ def find_topmost_coordinate(board, x, y):
     car_type = board[y][x]  # Get the car type from the current position
 
     # Move upwards to find the start of the car
-    while y > 0 and board[y - 1][x] == car_type:
-        y -= 1
+    max_length = 2 if car_type == "V2" else 3 if car_type == "V3" else 1
+
+    for i in range(max_length):
+        if y - i >= 0 and board[y - i][x] == car_type:
+            y -= i
 
     return x, y
 
