@@ -12,6 +12,9 @@ config.sat_backend = "kissat"
 GRID_SIZE = 6
 
 
+prev_colour_board = [[]]
+
+
 colour_mapping = {
     10: "Light Green",
     11: "Light Yellow",
@@ -322,17 +325,25 @@ def new_board(prev_board, direction, move_x, move_y):
     """
     Creates a new board after a move has been made.
     """
+
+    filled_x = move_x
+    filled_y = move_y
+
     next_board = prev_board
     if direction == "Right":
         if prev_board[move_y][move_x] == "H2":
             next_board[move_y][move_x - 1] = "E"
             next_board[move_y][move_x + 1] = "H2"
+
         elif prev_board[move_y][move_x] == "Red":
             next_board[move_y][move_x - 1] = "E"
             next_board[move_y][move_x + 1] = "Red"
         elif prev_board[move_y][move_x] == "H3":
             next_board[move_y][move_x - 2] = "E"
             next_board[move_y][move_x + 1] = "H3"
+
+        filled_x = move_x + 1
+
     elif direction == "Left":
         if prev_board[move_y][move_x] == "H2":
             next_board[move_y][move_x + 1] = "E"
@@ -343,6 +354,9 @@ def new_board(prev_board, direction, move_x, move_y):
         elif prev_board[move_y][move_x] == "H3":
             next_board[move_y][move_x + 2] = "E"
             next_board[move_y][move_x - 1] = "H3"
+
+        filled_x = move_x - 1
+
     elif direction == "Up":
         if prev_board[move_y][move_x] == "V2":
             next_board[move_y + 1][move_x] = "E"
@@ -350,6 +364,9 @@ def new_board(prev_board, direction, move_x, move_y):
         elif prev_board[move_y][move_x] == "V3":
             next_board[move_y + 2][move_x] = "E"
             next_board[move_y - 1][move_x] = "V3"
+
+        filled_y = move_y - 1
+
     elif direction == "Down":
         if prev_board[move_y][move_x] == "V2":
             next_board[move_y - 1][move_x] = "E"
@@ -358,7 +375,9 @@ def new_board(prev_board, direction, move_x, move_y):
             next_board[move_y - 2][move_x] = "E"
             next_board[move_y + 1][move_x] = "V3"
 
-    return next_board
+        filled_y = move_y + 1
+
+    return next_board, filled_x, filled_y
 
 
 def create_starting_board():
@@ -390,23 +409,54 @@ def generate_256_colour_code(colour_number):
     """
     return f"\033[48;5;{colour_number}m"
 
+def extract_colour_number(colour_code):
+    if f"\033[48;5;" in colour_code:
+       colour_code = colour_code.replace("\033[48;5;", "")
+       colour_code = colour_code.replace("m","")
+       return int(colour_code)
+
+
+def colour_board_transfer(board):
+
+    new_row = None
+    new_col = None
+    transfer_colour = None
+
+    colour_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+
+    for row in range(len(board)):
+        for col in range(len(board[row])):
+            if board[row][col] != "E" and prev_colour_board[row][col] != "":
+                colour_board[row][col] = prev_colour_board[row][col]
+            # If the cell was emptied
+            elif board[row][col] == "E" and prev_colour_board[row][col] != "":
+                transfer_colour = prev_colour_board[row][col]
+            # If this cell was just filled
+            elif board[row][col] != "E" and prev_colour_board[row][col] == "":
+                new_row = row
+                new_col = col
+    
+    colour_board[new_row][new_col] = transfer_colour
+
+    return colour_board
+
+
 
 def create_colour_board(board):
     """
     Creates a colour board for printing in the console.
     """
-    # Dictionary to store colour codes for each car
-    car_colour_mapping = {}
 
     # Initialize colour board with empty strings
     colour_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
     colours = [(generate_256_colour_code(num), name) for num, name in selected_colours]
 
+
     random.shuffle(colours)
     for row in range(len(board)):
         for col in range(len(board[row])):
-            # Coloring the 'Red' car
+
             if board[row][col] == "Red":
                 colour_board[row][col] = "\033[48;5;9m"
 
@@ -417,9 +467,12 @@ def create_colour_board(board):
                 and board[row][col + 1] == "H3"
                 and col + 2 < len(board[row])
                 and board[row][col + 2] == "H3"
+
+                and colour_board[row][col] == ""
+                and colour_board[row][col + 1] == ""
+                and colour_board[row][col + 2] == ""
             ):
                 colour_code, colour_name = colours.pop()
-                car_colour_mapping[f"H3_{col},{row}"] = (colour_code, colour_name)
                 colour_board[row][col] = colour_code
                 colour_board[row][col + 1] = colour_code
                 colour_board[row][col + 2] = colour_code
@@ -429,9 +482,11 @@ def create_colour_board(board):
                 board[row][col] == "H2"
                 and col + 1 < len(board[row])
                 and board[row][col + 1] == "H2"
+
+                and colour_board[row][col] == ""
+                and colour_board[row][col + 1] == ""
             ):
                 colour_code, colour_name = colours.pop()
-                car_colour_mapping[f"H2_{col},{row}"] = (colour_code, colour_name)
                 colour_board[row][col] = colour_code
                 colour_board[row][col + 1] = colour_code
 
@@ -441,16 +496,12 @@ def create_colour_board(board):
                     row == 0 or board[row - 1][col] != board[row][col]
                 ):  # Topmost part of the car
                     colour_code, colour_name = colours.pop()
-                    car_colour_mapping[f"{board[row][col]}_{col},{row}"] = (
-                        colour_code,
-                        colour_name,
-                    )
                     car_length = 2 if board[row][col] == "V2" else 3
                     for offset in range(car_length):
                         if row + offset < len(board):
                             colour_board[row + offset][col] = colour_code
 
-    return colour_board, car_colour_mapping
+    return colour_board
 
 
 def display_board(board, colour_board):
@@ -565,7 +616,7 @@ def extract_coordinates_from_move(move):
     return move.x, move.y
 
 
-def user_choose_move(move_list, car_colour_mapping, board):
+def user_choose_move(move_list, colour_board):
     """
     Allows the user to choose a move.
     """
@@ -579,26 +630,39 @@ def user_choose_move(move_list, car_colour_mapping, board):
             colour_name = "Red"
         else:
             # Adjust coordinates for right and down moves
-            if direction == "Right":
-                move_x, move_y = find_leftmost_coordinate(current_board, move_x, move_y)
-            elif direction == "Down":
-                move_x, move_y = find_topmost_coordinate(current_board, move_x, move_y)
-
-            coordinate_str = f"{move_x},{move_y}"
+            move_x, move_y = find_leftmost_coordinate(current_board, move_x, move_y)
+            move_x, move_y = find_topmost_coordinate(current_board, move_x, move_y)
 
             # Find the key in car_colour_mapping that ends with the coordinate string
-            colour_name = "Unknown"
-            for key in car_colour_mapping:
-                if key.endswith(coordinate_str):
-                    _, colour_name = car_colour_mapping[key]
-                    break
+            if colour_board[move_y][move_x] == "\033[48;5;9m":
+                colour_name = "Red"
+            elif colour_board[move_y][move_x] != "":
+                colour_num = extract_colour_number(colour_board[move_y][move_x])
+                colour_name = colour_mapping[colour_num]
+            else:
+                colour_name = "Unknown"
 
         print(f"Option: {option_num}: Move {colour_name} {direction}")
         option_num += 1
+    
 
-    chosen_option = int(
-        input("Which move do you want to do? Input the number of the move: ")
-    )
+    chosen_option = None
+
+    while True:
+        try:
+            chosen_option = int(
+            input("Which move do you want to do? Input the number of the move: ")
+            )
+
+            if 0 <= chosen_option <= option_num-1:
+                break
+            else:
+                print(f"Please enter a choice between {0} and {option_num-1}.")
+
+        except ValueError:
+            print("Invalid input. Please enter a valid integer.")
+
+
     chosen_move = move_list[chosen_option]
     direction = translate_direction(chosen_move)
     move_x, move_y = extract_coordinates_from_move(chosen_move)
@@ -644,6 +708,8 @@ def find_topmost_coordinate(board, x, y):
 
 
 if __name__ == "__main__":
+
+
     clear_screen()
     current_board = create_starting_board()
     num_moves = 0
@@ -652,7 +718,7 @@ if __name__ == "__main__":
         E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red = initialize_encoding()
 
         if num_moves != 0:
-            current_board = new_board(current_board, direction, move_x, move_y)
+            current_board, filled_x, filled_y = new_board(current_board, direction, move_x, move_y)
 
         current_grid = create_grid()
         current_grid = fill_grid(
@@ -666,7 +732,12 @@ if __name__ == "__main__":
 
         # Display the board
         formatted_board = format_board_for_print(current_board)
-        colour_board, car_colour_mapping = create_colour_board(current_board)
+        if num_moves == 1:
+            colour_board = create_colour_board(current_board)
+        else:
+            colour_board = colour_board_transfer(current_board)
+            
+
         final_board = display_board(formatted_board, colour_board)
         print_table(final_board)
 
@@ -678,9 +749,10 @@ if __name__ == "__main__":
             print("You won! It took you", num_moves, "moves")
             exit()
         else:
+            prev_colour_board = colour_board.copy()
             possible_moves = filter_can_move(
                 true_results
             )  # filter so we only have the values with keys CMR, CML, CMD, CMU
             direction, move_x, move_y = user_choose_move(
-                possible_moves, car_colour_mapping, current_board
+                possible_moves, colour_board
             )
