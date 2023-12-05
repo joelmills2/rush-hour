@@ -409,15 +409,21 @@ def generate_256_colour_code(colour_number):
     """
     return f"\033[48;5;{colour_number}m"
 
+
 def extract_colour_number(colour_code):
+    """
+    Extracts the colour number from a colour code.
+    """
     if f"\033[48;5;" in colour_code:
-       colour_code = colour_code.replace("\033[48;5;", "")
-       colour_code = colour_code.replace("m","")
-       return int(colour_code)
+        colour_code = colour_code.replace("\033[48;5;", "")
+        colour_code = colour_code.replace("m", "")
+        return int(colour_code)
 
 
 def colour_board_transfer(board):
-
+    """
+    Transfers the colours from the previous board to the new board.
+    """
     new_row = None
     new_col = None
     transfer_colour = None
@@ -435,11 +441,10 @@ def colour_board_transfer(board):
             elif board[row][col] != "E" and prev_colour_board[row][col] == "":
                 new_row = row
                 new_col = col
-    
+
     colour_board[new_row][new_col] = transfer_colour
 
     return colour_board
-
 
 
 def create_colour_board(board):
@@ -452,11 +457,9 @@ def create_colour_board(board):
 
     colours = [(generate_256_colour_code(num), name) for num, name in selected_colours]
 
-
     random.shuffle(colours)
     for row in range(len(board)):
         for col in range(len(board[row])):
-
             if board[row][col] == "Red":
                 colour_board[row][col] = "\033[48;5;9m"
 
@@ -467,7 +470,6 @@ def create_colour_board(board):
                 and board[row][col + 1] == "H3"
                 and col + 2 < len(board[row])
                 and board[row][col + 2] == "H3"
-
                 and colour_board[row][col] == ""
                 and colour_board[row][col + 1] == ""
                 and colour_board[row][col + 2] == ""
@@ -482,7 +484,6 @@ def create_colour_board(board):
                 board[row][col] == "H2"
                 and col + 1 < len(board[row])
                 and board[row][col + 1] == "H2"
-
                 and colour_board[row][col] == ""
                 and colour_board[row][col + 1] == ""
             ):
@@ -621,7 +622,6 @@ def user_choose_move(move_list, colour_board):
     Allows the user to choose a move.
     """
     option_num = 0
-    print("Possible Moves:", move_list)
     for move in move_list:
         direction = translate_direction(move)
         move_x, move_y = extract_coordinates_from_move(move)
@@ -644,24 +644,22 @@ def user_choose_move(move_list, colour_board):
 
         print(f"Option: {option_num}: Move {colour_name} {direction}")
         option_num += 1
-    
 
     chosen_option = None
 
     while True:
         try:
             chosen_option = int(
-            input("Which move do you want to do? Input the number of the move: ")
+                input("Which move do you want to do? Input the number of the move: ")
             )
 
-            if 0 <= chosen_option <= option_num-1:
+            if 0 <= chosen_option <= option_num - 1:
                 break
             else:
                 print(f"Please enter a choice between {0} and {option_num-1}.")
 
         except ValueError:
             print("Invalid input. Please enter a valid integer.")
-
 
     chosen_move = move_list[chosen_option]
     direction = translate_direction(chosen_move)
@@ -708,8 +706,6 @@ def find_topmost_coordinate(board, x, y):
 
 
 if __name__ == "__main__":
-
-
     clear_screen()
     current_board = create_starting_board()
     num_moves = 0
@@ -718,7 +714,9 @@ if __name__ == "__main__":
         E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red = initialize_encoding()
 
         if num_moves != 0:
-            current_board, filled_x, filled_y = new_board(current_board, direction, move_x, move_y)
+            current_board, filled_x, filled_y = new_board(
+                current_board, direction, move_x, move_y
+            )
 
         current_grid = create_grid()
         current_grid = fill_grid(
@@ -736,7 +734,6 @@ if __name__ == "__main__":
             colour_board = create_colour_board(current_board)
         else:
             colour_board = colour_board_transfer(current_board)
-            
 
         final_board = display_board(formatted_board, colour_board)
         print_table(final_board)
@@ -753,6 +750,4 @@ if __name__ == "__main__":
             possible_moves = filter_can_move(
                 true_results
             )  # filter so we only have the values with keys CMR, CML, CMD, CMU
-            direction, move_x, move_y = user_choose_move(
-                possible_moves, colour_board
-            )
+            direction, move_x, move_y = user_choose_move(possible_moves, colour_board)
