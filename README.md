@@ -1,4 +1,4 @@
-# CISC/CMPE 204 Modelling Project
+# Simulating Rush Hour for CISC204 Modelling Project
 
 Welcome to rush hour for CISC/CMPE 204!
 
@@ -16,7 +16,9 @@ can then build a playable game.
 
 We hope you enjoy!
 
- - Alex, Ethan, Jacob, and Joel
+Cheers,
+
+ \- Alex, Ethan, Jacob, and Joel
 
 ## Structure
 
