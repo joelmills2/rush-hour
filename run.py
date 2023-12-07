@@ -1,10 +1,15 @@
 from bauhaus import Encoding, proposition, constraint
 from bauhaus.utils import count_solutions, likelihood
-from boards import all_boards
-import random
-import os
 from colorama import Back, Style, Fore
 from nnf import config
+
+from boards import all_boards
+
+import random
+import time
+import threading
+import os
+
 
 config.sat_backend = "kissat"
 
@@ -451,7 +456,6 @@ def create_colour_board(board):
     """
     Creates a colour board for printing in the console.
     """
-
     # Initialize colour board with empty strings
     colour_board = [["" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
@@ -494,7 +498,18 @@ def create_colour_board(board):
             # Improved logic for vertical cars 'V2' and 'V3'
             elif board[row][col] in ["V2", "V3"]:
                 if (
-                    row == 0 or board[row - 1][col] != board[row][col]
+                    board[row][col] == "V3"
+                    and (row == 0 or board[row - 1][col] != board[row][col])
+                ) or (
+                    board[row][col] == "V2"
+                    and (
+                        row == 0
+                        or board[row - 1][col] != board[row][col]
+                        or (
+                            board[row - 2][col] == board[row][col]
+                            and board[row - 3][col] != board[row][col]
+                        )
+                    )
                 ):  # Topmost part of the car
                     colour_code, colour_name = colours.pop()
                     car_length = 2 if board[row][col] == "V2" else 3
@@ -714,9 +729,274 @@ def find_topmost_coordinate(board, x, y):
     return x, y
 
 
+def loading_animation():
+    """
+    Displays a loading animation while the board is being generated.
+    """
+    max_dots = 3
+    while not board_ready:
+        for num_dots in range(max_dots + 1):
+            print(
+                "\rLoading" + "." * num_dots + " " * (max_dots - num_dots),
+                end="",
+                flush=True,
+            )
+            time.sleep(0.5)
+    print("\rBoard ready!    ")
+
+
+def generate_random_board():
+    """
+    Generates a random board for the game rush hour. Although our propositions and constraints
+    are used in this function, it does not create the new constraints needed to solely rely on
+    them for board generation. This function mainly relies on python code, and was a late addition
+    to our project to add more functionality for the player, and a little more fun for us :)
+
+    This function is not perfect, and often creates boards that are too simple, but we thought
+    we would leave it in for the player to enjoy. We hope to update it in the future to create
+    more complex boards using more capable tools.
+    """
+
+    def initialize_board():
+        """
+        Initializes the board with empty spaces and the red car in the winning position.
+        """
+        # Generate an empty winning
+        winning_board = [
+            ["E", "E", "E", "E", "E", "E"],
+            ["E", "E", "E", "E", "E", "E"],
+            ["E", "E", "E", "E", "Red", "Red"],
+            ["E", "E", "E", "E", "E", "E"],
+            ["E", "E", "E", "E", "E", "E"],
+            ["E", "E", "E", "E", "E", "E"],
+        ]
+        bag_of_cars = [
+            "H2",
+            "H2",
+            "H2",
+            "H2",
+            "H2",
+            "H2",
+            "H3",
+            "H3",
+            "V2",
+            "V2",
+            "V2",
+            "V2",
+            "V2",
+            "V2",
+            "V2",
+            "V3",
+            "V3",
+        ]
+        random.shuffle(bag_of_cars)
+
+        counter = 0
+
+        prob = 0.35
+
+        def add_car():
+            """
+            Adds a car to the board.
+            """
+            nonlocal counter
+            counter += 1
+            # Generate a random car type
+            car_type = bag_of_cars.pop()
+
+            # Generate a random coordinate
+            x = random.randint(0, 5)
+            y = random.randint(0, 5)
+
+            # Check if the car can be placed at the coordinate
+            if (
+                car_type == "H2"
+                and x + 1 < 6
+                and winning_board[y][x] == "E"
+                and winning_board[y][x + 1] == "E"
+                and y != 2
+            ):
+                winning_board[y][x] = "H2"
+                winning_board[y][x + 1] = "H2"
+            elif (
+                car_type == "H3"
+                and x + 2 < 6
+                and winning_board[y][x] == "E"
+                and winning_board[y][x + 1] == "E"
+                and winning_board[y][x + 2] == "E"
+                and y != 2
+            ):
+                winning_board[y][x] = "H3"
+                winning_board[y][x + 1] = "H3"
+                winning_board[y][x + 2] = "H3"
+
+            # try to spawn V2 cars on the right side of the board
+            elif car_type == "V2":
+                # iterate from top right to bottom left
+                for i in range(5, -1, -1):
+                    if random.random() < 0.5:
+                        iterable = range(4, 0, -1)
+                    else:
+                        iterable = range(5)
+                    for j in iterable:
+                        if (
+                            winning_board[j][i] == "E"
+                            and winning_board[j + 1][i] == "E"
+                            and random.random() < prob
+                        ):
+                            winning_board[j][i] = "V2"
+                            winning_board[j + 1][i] = "V2"
+                            return
+            # try to spawn V3 cars on the right side of the board
+            elif car_type == "V3":
+                # iterate from top right to bottom left
+                for i in range(5, -1, -1):
+                    if random.random() < 0.5:
+                        iterable = range(3, 0, -1)
+                    else:
+                        iterable = range(4)
+                    for j in iterable:
+                        if (
+                            winning_board[j][i] == "E"
+                            and winning_board[j + 1][i] == "E"
+                            and winning_board[j + 2][i] == "E"
+                            and random.random() < prob
+                        ):
+                            winning_board[j][i] = "V3"
+                            winning_board[j + 1][i] = "V3"
+                            winning_board[j + 2][i] = "V3"
+                            return
+
+            else:
+                bag_of_cars.append(car_type)
+                if counter < 100:
+                    add_car()
+
+        # Add cars to the board
+        cars = random.randint(7, 11)
+        for _ in range(cars):
+            add_car()
+
+        return winning_board
+
+    def rewind(board):
+        """
+        Make a sequence of randomized moves to rewind the board to a playable starting state
+        """
+        global E
+
+        counter = 1
+        max_moves = 300
+        while True:
+            E, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red = initialize_encoding()
+            current_grid = create_grid()
+            current_grid = fill_grid(
+                current_grid, Empty, H2, H3, V2, V3, CMR, CML, CMU, CMD, Red
+            )
+            set_states(
+                current_grid, board
+            )  # set the constraints of the state of each cell
+            can_move(current_grid)
+            only_one_state(current_grid)
+            T = E
+            T = T.compile()
+
+            true_results = filter_true_results(T.solve())
+            possible_moves = filter_can_move(true_results)
+            # check if it is possible to move the red car to the left
+            if counter % 5 == 0:
+                for move in possible_moves:
+                    if (
+                        repr(move)[:3] == "CML"
+                        and extract_coordinates_from_move(move)[1] == 2
+                    ):
+                        direction = translate_direction(move)
+                        move_x, move_y = extract_coordinates_from_move(move)
+                        board, filled_x, filled_y = new_board(
+                            board, direction, move_x, move_y
+                        )
+                        break
+            # remove red right from possible moves
+            possible_moves = [
+                move
+                for move in possible_moves
+                if not (
+                    repr(move)[:3] == "CMR"
+                    and extract_coordinates_from_move(move)[1] == 2
+                )
+            ]
+            move = random.choice(possible_moves)
+            direction = translate_direction(move)
+            move_x, move_y = extract_coordinates_from_move(move)
+            board, filled_x, filled_y = new_board(board, direction, move_x, move_y)
+
+            # check if the red car is at the right edge of the board every 100 moves
+            if counter % 100 == 0:
+                # find rightmost coordinate of red car
+                for x in range(5, -1, -1):
+                    if board[2][x] == "Red":
+                        break
+
+                # if x is at the right edge of the board, leave while loop
+                if x == 5 or x == 4:
+                    counter += 1
+                    continue
+                # if every square to the right of the red car is empty, continue shuffling
+                else:
+                    flag = True
+                    for i in range(x + 1, 6):
+                        if board[2][i] != "E":
+                            flag = False
+                            break
+
+                    if not flag:
+                        break
+
+            counter += 1
+            if counter > max_moves:
+                return False
+
+        return True
+
+    winning_board = initialize_board()
+
+    if not rewind(winning_board):
+        return generate_random_board()
+
+    global board_ready
+    board_ready = True
+    return winning_board
+
+
+board_ready = False
+
 if __name__ == "__main__":
     clear_screen()
-    current_board = create_starting_board()
+    board_type = ""
+
+    # Welcome message!
+    print("Welcome to Rush Hour! \n")
+
+    while True:
+        board_type = input(
+            "Press 0 for a randomly generated board or 1 for a real game board: "
+        )
+        if board_type == "0" or board_type == "1":
+            break
+        else:
+            print("Invalid input. Please enter either 0 or 1")
+
+    current_board = []
+    if board_type == "0":
+        loading_thread = threading.Thread(target=loading_animation)
+        loading_thread.start()
+
+        current_board = generate_random_board()
+
+        loading_thread.join()
+    else:
+        current_board = create_starting_board()
+
     num_moves = 0
 
     while True:  # Until win state is reached
