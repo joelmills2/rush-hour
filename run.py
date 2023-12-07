@@ -1,12 +1,15 @@
 from bauhaus import Encoding, proposition, constraint
 from bauhaus.utils import count_solutions, likelihood
+from colorama import Back, Style, Fore
+from nnf import config
+
 from boards import all_boards
+
 import random
 import time
 import threading
 import os
-from colorama import Back, Style, Fore
-from nnf import config
+
 
 config.sat_backend = "kissat"
 
@@ -495,7 +498,18 @@ def create_colour_board(board):
             # Improved logic for vertical cars 'V2' and 'V3'
             elif board[row][col] in ["V2", "V3"]:
                 if (
-                    row == 0 or board[row - 1][col] != board[row][col]
+                    board[row][col] == "V3"
+                    and (row == 0 or board[row - 1][col] != board[row][col])
+                ) or (
+                    board[row][col] == "V2"
+                    and (
+                        row == 0
+                        or board[row - 1][col] != board[row][col]
+                        or (
+                            board[row - 2][col] == board[row][col]
+                            and board[row - 3][col] != board[row][col]
+                        )
+                    )
                 ):  # Topmost part of the car
                     colour_code, colour_name = colours.pop()
                     car_length = 2 if board[row][col] == "V2" else 3
@@ -742,6 +756,7 @@ def generate_random_board():
     we would leave it in for the player to enjoy. We hope to update it in the future to create
     more complex boards using more capable tools.
     """
+
     def initialize_board():
         """
         Initializes the board with empty spaces and the red car in the winning position.
@@ -963,7 +978,9 @@ if __name__ == "__main__":
     print("Welcome to Rush Hour! \n")
 
     while True:
-        board_type = input("Press 0 for a randomly generated board or 1 for a real game board: ")
+        board_type = input(
+            "Press 0 for a randomly generated board or 1 for a real game board: "
+        )
         if board_type == "0" or board_type == "1":
             break
         else:
