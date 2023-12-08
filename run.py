@@ -522,7 +522,7 @@ def create_colour_board(board):
 
 def display_board(board, colour_board):
     """
-    Displays the board in the console.
+    Creates a board ready to display in the console.
     """
     display_board = []
     for row in range(6):
@@ -555,7 +555,7 @@ def print_table(final_board):
 
 def example_theory(E):
     """
-    Builds an example full theory for the game.
+    Builds an example theory for the game.
     """
     set_states(
         current_grid, current_board
@@ -568,7 +568,7 @@ def example_theory(E):
 
 def filter_true_results(result_dict):
     """
-    Filters the results dictionary to only include the true results.
+    Filters the results dictionary to only include the true propositions.
     """
     # Using dictionary comprehension to filter out True values
     true_values = {}
@@ -581,7 +581,7 @@ def filter_true_results(result_dict):
 
 def filter_can_move(results):
     """
-    Filters the results dictionary to only include the moves that can be made.
+    Filters the results dictionary to only include CMR, CMD, CML, CMU propositions.
     """
     can_move_results_list = []
     for key in results.keys():
@@ -970,6 +970,9 @@ def generate_random_board():
 
 board_ready = False
 
+
+
+# THE MAIN LOOP OF OUR CODE
 if __name__ == "__main__":
     clear_screen()
     board_type = ""
